@@ -2,88 +2,58 @@
 import { ref, onMounted } from "vue";
 import { useProjects } from "./composables/useProjects";
 import type { Project } from "./types/Project";
+import ProjectForm from "./components/ProjectForm.vue";
+import ProjectList from "./components/ProjectList.vue";
 
 const { projects, load, create, update, remove } = useProjects();
 
-const name = ref("");
-const description = ref("");
-const editingId = ref<string | null>(null);
-const error = ref<string | null>(null);
+const editingProject = ref<Project | null>(null);
 
 onMounted(() => {
   load();
 });
 
-function resetForm() {
-  name.value = "";
-  description.value = "";
-  editingId.value = null;
-}
-
-function handleSave() {
-  if (!name.value.trim()) {
-    error.value = "Nazwa projektu jest wymagana";
-    return;
-  }
-
-  error.value = null;
-
-  if (editingId.value) {
-    update({
-      id: editingId.value,
-      name: name.value,
-      description: description.value,
-    });
+function handleSave(projectData: Omit<Project, "id"> & { id?: string }) {
+  if (projectData.id) {
+    update(projectData as Project);
   } else {
-    const newProject: Project = {
+    create({
       id: crypto.randomUUID(),
-      name: name.value,
-      description: description.value,
-    };
-    create(newProject);
+      name: projectData.name,
+      description: projectData.description,
+    });
   }
 
-  resetForm();
+  editingProject.value = null;
 }
 
 function handleEdit(project: Project) {
-  name.value = project.name;
-  description.value = project.description;
-  editingId.value = project.id;
+  editingProject.value = project;
 }
 
-function handleDelete(id: string) {
-  remove(id);
+function handleCancel() {
+  editingProject.value = null;
 }
 </script>
 
 <template>
-  <div style="padding:20px">
+  <div class="app-container">
     <h1>ManageMe</h1>
 
-    <h2>{{ editingId ? "Edytuj projekt" : "Dodaj projekt" }}</h2>
+    <div class="section">
+      <ProjectForm
+        :modelValue="editingProject"
+        @save="handleSave"
+        @cancel="handleCancel"
+      />
+    </div>
 
-    <p v-if="error" style="color:red">{{ error }}</p>
-
-    <input v-model="name" placeholder="Nazwa" />
-    <br />
-    <textarea v-model="description" placeholder="Opis"></textarea>
-    <br />
-    <button @click="handleSave">
-      {{ editingId ? "Zapisz zmiany" : "Dodaj" }}
-    </button>
-
-    <h2>Lista projektów</h2>
-
-    <div
-      v-for="project in projects"
-      :key="project.id"
-      style="border:1px solid gray; margin:8px; padding:8px"
-    >
-      <h3>{{ project.name }}</h3>
-      <p>{{ project.description }}</p>
-      <button @click="handleEdit(project)">Edytuj</button>
-      <button @click="handleDelete(project.id)">Usuń</button>
+    <div class="section">
+      <ProjectList
+        :projects="projects"
+        @edit="handleEdit"
+        @delete="remove"
+      />
     </div>
   </div>
 </template>
