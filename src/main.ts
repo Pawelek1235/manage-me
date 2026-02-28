@@ -1,11 +1,4 @@
-import { ProjectService } from "./services/ProjectService";
+import { createApp } from "vue";
+import App from "./App.vue";
 
-const service = new ProjectService();
-
-service.create({
-  id: crypto.randomUUID(),
-  name: "Test Project",
-  description: "Opis testowy"
-});
-
-console.log(service.getAll());
+createApp(App).mount("#app");

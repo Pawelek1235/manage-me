@@ -16,10 +16,6 @@ export class ProjectService {
     return this.getProjects();
   }
 
-  getById(id: string): Project | undefined {
-    return this.getProjects().find(p => p.id === id);
-  }
-
   create(project: Project): void {
     const projects = this.getProjects();
     projects.push(project);
